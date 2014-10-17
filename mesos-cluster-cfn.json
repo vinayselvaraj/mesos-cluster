@@ -8,13 +8,18 @@
       "Description" : "Mesos Master Instance Type",
       "Type" : "String",
       "Default" : "t2.micro"
-    }
-    
+    },
+    "KeyName" : {
+      "Description" : "The EC2 Key Pair to allow SSH access to the instances",
+      "Type" : "String",
+      "Default" : "default"
+    }    
   },
   
   "Mappings" : {
     "AWSInstanceType2Arch" : {
       "t1.micro"    : { "Arch" : "64" },
+      "t2.micro"    : { "Arch" : "64" },
       "m1.small"    : { "Arch" : "64" },
       "m1.medium"   : { "Arch" : "64" },
       "m1.large"    : { "Arch" : "64" },
@@ -29,19 +34,51 @@
     },
     
     "AWSRegionArch2AMI" : {
-      "us-east-1"      : { "32" : "ami-aba768c2", "64" : "ami-81a768e8" },
-      "us-west-1"      : { "32" : "ami-458fd300", "64" : "ami-b18ed2f4" },
-      "us-west-2"      : { "32" : "ami-fcff72cc", "64" : "ami-feff72ce" },
-      "eu-west-1"      : { "32" : "ami-018bb975", "64" : "ami-998bb9ed" },
-      "sa-east-1"      : { "32" : "ami-a039e6bd", "64" : "ami-a239e6bf" },
-      "ap-southeast-1" : { "32" : "ami-425a2010", "64" : "ami-5e5a200c" },
-      "ap-southeast-2" : { "32" : "ami-b3990e89", "64" : "ami-bd990e87" },
-      "ap-northeast-1" : { "32" : "ami-7871c579", "64" : "ami-7671c577" }
+      "us-east-1"      : { "64" : "ami-b66ed3de" },
+      "us-west-1"      : { "64" : "ami-4b6f650e" },
+      "us-west-2"      : { "64" : "ami-b5a7ea85" },
+      "eu-west-1"      : { "64" : "ami-6e7bd919" },
+      "sa-east-1"      : { "64" : "ami-8737829a" },
+      "ap-southeast-1" : { "64" : "ami-ac5c7afe" },
+      "ap-southeast-2" : { "64" : "ami-63f79559" },
+      "ap-northeast-1" : { "64" : "ami-4985b048" }
     }
   },
   
   "Resources" : {
+    "MesosMasterAEIP" : {
+      "Type" : "AWS::EC2::EIP",
+      "Properties" : {
+        "Domain" : "vpc"
+      }
+    },
+    "MesosMasterBEIP" : {
+      "Type" : "AWS::EC2::EIP",
+      "Properties" : {
+        "Domain" : "vpc"
+      }
+    },
+    "MesosMasterCEIP" : {
+      "Type" : "AWS::EC2::EIP",
+      "Properties" : {
+        "Domain" : "vpc"
+      }
+    },
     
+    "MesosMasterLaunchConfig" : {
+      "Type" : "AWS::AutoScaling::LaunchConfiguration",
+      "Properties" : {
+        "KeyName" : { "Ref" : "KeyName" },
+        "ImageId" : {
+          "Fn::FindInMap" : [
+            "AWSRegionArch2AMI",
+            { "Ref" : "AWS::Region" },
+            { "Fn::FindInMap" : ["AWSInstanceType2Arch", { "Ref" : "MasterInstanceType" }, "Arch"] }
+          ]
+        },
+        "InstanceType" : { "Ref" : "MasterInstanceType" }
+      }
+    }
     
   }
   
