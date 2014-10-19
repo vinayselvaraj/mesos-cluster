@@ -46,19 +46,19 @@
   },
   
   "Resources" : {
-    "MesosMasterAEIP" : {
+    "MesosMasterEipA" : {
       "Type" : "AWS::EC2::EIP",
       "Properties" : {
         "Domain" : "vpc"
       }
     },
-    "MesosMasterBEIP" : {
+    "MesosMasterEipB" : {
       "Type" : "AWS::EC2::EIP",
       "Properties" : {
         "Domain" : "vpc"
       }
     },
-    "MesosMasterCEIP" : {
+    "MesosMasterEipC" : {
       "Type" : "AWS::EC2::EIP",
       "Properties" : {
         "Domain" : "vpc"
