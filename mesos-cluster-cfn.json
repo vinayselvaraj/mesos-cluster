@@ -88,7 +88,8 @@
             { "Fn::FindInMap" : ["AWSInstanceType2Arch", { "Ref" : "MasterInstanceType" }, "Arch"] }
           ]
         },
-        "InstanceType" : { "Ref" : "MasterInstanceType" }
+        "InstanceType" : { "Ref" : "MasterInstanceType" },
+        "SecurityGroups" : [ { "Ref" : "MesosMasterSG" } ]
       }
     }
     
