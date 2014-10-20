@@ -13,7 +13,11 @@
       "Description" : "The EC2 Key Pair to allow SSH access to the instances",
       "Type" : "String",
       "Default" : "default"
-    }    
+    },
+    "VpcId" : {
+      "Description" : "VPC ID",
+      "Type" : "String"
+    }
   },
   
   "Mappings" : {
@@ -62,6 +66,14 @@
       "Type" : "AWS::EC2::EIP",
       "Properties" : {
         "Domain" : "vpc"
+      }
+    },
+    
+    "MesosMasterSG" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "MesosMaster SecurityGroup",
+        "VpcId" : { "Ref" : "VpcId" }
       }
     },
     
