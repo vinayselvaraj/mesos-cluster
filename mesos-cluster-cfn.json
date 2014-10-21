@@ -77,7 +77,8 @@
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
         "VpcId" : { "Ref" : "VPC" },
-        "CidrBlock" : "10.0.1.0/24"
+        "CidrBlock" : "10.0.1.0/24",
+        "AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : "" } ]}
       }
     },
     
@@ -85,7 +86,8 @@
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
         "VpcId" : { "Ref" : "VPC" },
-        "CidrBlock" : "10.0.2.0/24"
+        "CidrBlock" : "10.0.2.0/24",
+        "AvailabilityZone" : { "Fn::Select" : [ "1", { "Fn::GetAZs" : "" } ]}
       }
     },
     
@@ -93,7 +95,8 @@
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
         "VpcId" : { "Ref" : "VPC" },
-        "CidrBlock" : "10.0.3.0/24"
+        "CidrBlock" : "10.0.3.0/24",
+        "AvailabilityZone" : { "Fn::Select" : [ "2", { "Fn::GetAZs" : "" } ]}
       }
     },
     
@@ -126,10 +129,10 @@
       "Properties" : {
         "AvailabilityZones" : { "Fn::GetAZs" : "" },
         "LaunchConfigurationName" : { "Ref" : "MesosMasterLaunchConfig" },
-        "VPCZoneIdentifier" : [
-          { "Ref" : "SubnetA " },
-          { "Ref" : "SubnetB " },
-          { "Ref" : "SubnetC " }
+        "VPCZoneIdentifier" : [ 
+          { "Ref" : "SubnetA" },
+          { "Ref" : "SubnetB" },
+          { "Ref" : "SubnetC" }
         ],
         "MinSize" : "1",
         "MaxSize" : "1",
