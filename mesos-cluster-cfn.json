@@ -13,10 +13,6 @@
       "Description" : "The EC2 Key Pair to allow SSH access to the instances",
       "Type" : "String",
       "Default" : "default"
-    },
-    "VpcId" : {
-      "Description" : "VPC ID",
-      "Type" : "String"
     }
   },
   
@@ -50,22 +46,54 @@
   },
   
   "Resources" : {
-    "MesosMasterEipA" : {
+    
+    "MesosMasterEip" : {
       "Type" : "AWS::EC2::EIP",
       "Properties" : {
         "Domain" : "vpc"
       }
     },
-    "MesosMasterEipB" : {
-      "Type" : "AWS::EC2::EIP",
+    
+    "VPC" : {
+      "Type" : "AWS::EC2::VPC",
       "Properties" : {
-        "Domain" : "vpc"
+        "CidrBlock" : "10.0.0.0/16"
       }
     },
-    "MesosMasterEipC" : {
-      "Type" : "AWS::EC2::EIP",
+    
+    "IGW" : {
+      "Type" : "AWS::EC2::InternetGateway"
+    },
+    
+    "VPCGatewayAttachment" : {
+      "Type" : "AWS::EC2::VPCGatewayAttachment",
       "Properties" : {
-        "Domain" : "vpc"
+        "InternetGatewayId" : { "Ref" : "IGW" },
+        "VpcId" : { "Ref" : "VPC" }
+      }
+    },
+    
+    "SubnetA" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.1.0/24"
+      }
+    },
+    
+    "SubnetB" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.2.0/24"
+      }
+    },
+    
+    "SubnetC" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.3.0/24"
       }
     },
     
@@ -73,7 +101,7 @@
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
         "GroupDescription" : "MesosMaster SecurityGroup",
-        "VpcId" : { "Ref" : "VpcId" }
+        "VpcId" : { "Ref" : "VPC" }
       }
     },
     
@@ -90,6 +118,19 @@
         },
         "InstanceType" : { "Ref" : "MasterInstanceType" },
         "SecurityGroups" : [ { "Ref" : "MesosMasterSG" } ]
+      }
+    },
+    
+    "MesosMasterAutoScalingGroup" : {
+      "Type" : "AWS::AutoScaling::AutoScalingGroup",
+      "Properties" : {
+        "AvailabilityZones" : { "Fn::GetAZs" : "" },
+        "LaunchConfigurationName" : { "Ref" : "MesosMasterLaunchConfig" },
+        "MinSize" : "1",
+        "MaxSize" : "1",
+        "Tags" : [
+          { "Key" : "Name", "Value" : "mesos-master", "PropagateAtLaunch" : "true" }
+        ]
       }
     }
     
