@@ -126,6 +126,11 @@
       "Properties" : {
         "AvailabilityZones" : { "Fn::GetAZs" : "" },
         "LaunchConfigurationName" : { "Ref" : "MesosMasterLaunchConfig" },
+        "VPCZoneIdentifier" : [
+          { "Ref" : "SubnetA " },
+          { "Ref" : "SubnetB " },
+          { "Ref" : "SubnetC " }
+        ],
         "MinSize" : "1",
         "MaxSize" : "1",
         "Tags" : [
