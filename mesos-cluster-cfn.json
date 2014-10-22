@@ -73,6 +73,46 @@
       }
     },
     
+    "VPCPublicSubnetRouteTable" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" }
+      }
+    },
+    
+    "VPCPublicIGWRoute" : {
+      "Type" : "AWS::EC2::Route",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "VPCPublicSubnetRouteTable" },
+        "GatewayId" : { "Ref" : "IGW"},
+        "DestinationCidrBlock" : "0.0.0.0/0"
+      }
+    },
+    
+    "VPCPublicRouteTableAssocSubnetA" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "VPCPublicSubnetRouteTable" },
+        "SubnetId" : { "Ref" : "SubnetA" }
+      }
+    },
+    
+    "VPCPublicRouteTableAssocSubnetB" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "VPCPublicSubnetRouteTable" },
+        "SubnetId" : { "Ref" : "SubnetB" }
+      }
+    },
+    
+    "VPCPublicRouteTableAssocSubnetC" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "VPCPublicSubnetRouteTable" },
+        "SubnetId" : { "Ref" : "SubnetC" }
+      }
+    },
+    
     "SubnetA" : {
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
