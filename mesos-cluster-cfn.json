@@ -331,6 +331,7 @@
                   
                   "echo \"zk://`host -s ", {"Ref" : "MesosMasterEip"}," |awk {'print $NF'} |sed 's/\\.$//g'`:2181/mesos\" > /etc/mesos/zk\n",
                   "echo '5mins' > /etc/mesos-slave/executor_registration_timeout\n",
+                  "echo 'docker,mesos' > /etc/mesos-slave/containerizers\n",
                   
                   "/sbin/service docker start\n",
                   "start mesos-slave\n",
