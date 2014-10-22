@@ -1,7 +1,7 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
   
-  "Description" : "mesos-cluster CloudFormation template",
+  "Description" : "Mesos Cluster CloudFormation Template:  This template creates a single master Mesos cluster",
   
   "Parameters" : {
     "MasterInstanceType" : {
