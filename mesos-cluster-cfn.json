@@ -242,6 +242,8 @@
                   "# Skip: /etc/mesos-master/quorum\n",
                   
                   "start mesos-master\n",
+                  "start marathon\n",
+                  
                   "echo manual >> /etc/init/mesos-slave.conf"
 
                 ]]},
@@ -311,6 +313,11 @@
       "Metadata" : {
         "AWS::CloudFormation::Init" : {
           "config" : {
+            "packages" : {
+              "yum" : {
+                "docker" : []
+              }
+            },
             "files" : {
               "/tmp/setup.sh" : {
                 "content" : { "Fn::Join" : ["", [
@@ -319,11 +326,13 @@
                   
                   "yum -y update\n",
                   "rpm -Uvh http://repos.mesosphere.io/el/6/noarch/RPMS/mesosphere-el-repo-6-2.noarch.rpm\n",
-                  "yum -y install mesos marathon\n",
+                  "yum -y install mesos\n",
                   
-                  "# Skip: /etc/mesos/zk\n",
-                  "# Skip: /etc/mesos-master/quorum\n",
                   
+                  "echo \"zk://`host -s ", {"Ref" : "MesosMasterEip"}," |awk {'print $NF'} |sed 's/\\.$//g'`:2181/mesos\" > /etc/mesos/zk\n",
+                  "echo '5mins' > /etc/mesos-slave/executor_registration_timeout\n",
+                  
+                  "/sbin/service docker start\n",
                   "start mesos-slave\n",
                   "echo manual >> /etc/init/mesos-master.conf"
 
