@@ -57,7 +57,8 @@
     "VPC" : {
       "Type" : "AWS::EC2::VPC",
       "Properties" : {
-        "CidrBlock" : "10.0.0.0/16"
+        "CidrBlock" : "10.0.0.0/16",
+        "EnableDnsHostnames" : "true"
       }
     },
     
@@ -148,10 +149,121 @@
       }
     },
     
+    "MesosMasterIAMRole" : {
+      "Type": "AWS::IAM::Role",
+      "Properties" : {
+        "AssumeRolePolicyDocument" : {
+          "Version" : "2012-10-17",
+          "Statement" : [ {
+            "Effect" : "Allow",
+            "Principal" : {
+              "Service" : [ "ec2.amazonaws.com" ]
+            },
+            "Action" : [ "sts:AssumeRole" ]
+          }]
+        },
+        
+        "Path" : "/",
+        
+        "Policies" : [ {
+          "PolicyName" : "ControllerPolicy",
+          "PolicyDocument" : {
+            "Version" : "2012-10-17",
+            "Statement" : [
+              {
+                "Effect":"Allow",
+                "Action":"*",
+                "Resource":"*"
+              },
+              {
+                "Effect":"Deny",
+                "Action":"iam:*",
+                "Resource":"*"
+              }
+            ]
+          }
+        }]
+      }
+    },
+    
+    "MesosMasterInstProfile" : {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties" : {
+        "Path" : "/",
+        "Roles" : [ { "Ref" : "MesosMasterIAMRole" } ]
+      }
+    },
+    
     "MesosMasterLaunchConfig" : {
       "Type" : "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata" : {
+        "AWS::CloudFormation::Init" : {
+          "config" : {
+            "packages" : {
+              "yum" : {
+                "ganglia" : [],
+                "ganglia-gmetad" : [],
+                "ganglia-gmond" : [],
+                "ganglia-web" : []
+              }
+            },
+            "files" : {
+              "/tmp/associate_eip.sh" : {
+                "content" : { "Fn::Join" : ["", [
+                  "#!/bin/bash\n",
+                  "INSTANCE_ID=`curl -s  http://169.254.169.254/latest/meta-data/instance-id`\n",
+                  "ALLOCATION_ID=", { "Fn::GetAtt" : [ "MesosMasterEip", "AllocationId" ]}, "\n",
+                  "EC2_REGION=", { "Ref": "AWS::Region"}, "\n",
+                  "aws ec2 --region $EC2_REGION associate-address --allocation-id $ALLOCATION_ID --instance-id $INSTANCE_ID --allow-reassociation\n"
+                ]]},
+                "mode" : "000755",
+                "owner" : "root",
+                "group" : "root"
+              },
+              "/tmp/setup.sh" : {
+                "content" : { "Fn::Join" : ["", [
+                  "#!/bin/bash\n",
+                  "until /tmp/associate_eip.sh\n",
+                  "do\n",
+                  "  sleep 15\n",
+                  "done\n",
+                  
+                  "yum -y update\n",
+                  "rpm -Uvh http://repos.mesosphere.io/el/6/noarch/RPMS/mesosphere-el-repo-6-2.noarch.rpm\n",
+                  "yum -y install mesos marathon\n",
+                  
+                  "rpm -Uvh http://archive.cloudera.com/cdh4/one-click-install/redhat/6/x86_64/cloudera-cdh-4-0.x86_64.rpm\n",
+                  "yum -y install zookeeper zookeeper-server\n",
+                  "zookeeper-server-initialize --myid=1\n",
+                  "echo \"server.1=`host -s ", {"Ref" : "MesosMasterEip"}," |awk {'print $NF'} |sed 's/\\.$//g'`:2888:3888\" >> /etc/zookeeper/conf/zoo.cfg\n",
+                  "chown -R zookeeper:zookeeper /var/lib/zookeeper\n",
+                  "/sbin/chkconfig zookeeper-server on\n",
+                  "/sbin/service zookeeper-server start\n",
+                  
+                  "# Skip: /etc/mesos/zk\n",
+                  "# Skip: /etc/mesos-master/quorum\n",
+                  
+                  
+                  
+                  
+                ]]},
+                "mode" : "000755",
+                "owner" : "root",
+                "group" : "root"
+              }
+            },
+            "commands" : {
+              "runSetup" : {
+                "command" : "/tmp/setup.sh"
+              }
+            }
+          }
+        }
+      },
       "Properties" : {
         "KeyName" : { "Ref" : "KeyName" },
+        "AssociatePublicIpAddress" : "true",
+        "IamInstanceProfile" : { "Ref" : "MesosMasterInstProfile" },
         "ImageId" : {
           "Fn::FindInMap" : [
             "AWSRegionArch2AMI",
@@ -160,7 +272,21 @@
           ]
         },
         "InstanceType" : { "Ref" : "MasterInstanceType" },
-        "SecurityGroups" : [ { "Ref" : "MesosMasterSG" } ]
+        "SecurityGroups" : [ { "Ref" : "MesosMasterSG" } ],
+        "UserData"        : {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "/opt/aws/bin/cfn-init --region ", 
+                  { "Ref": "AWS::Region"}, 
+                  " -s ", { "Ref" : "AWS::StackName" }, 
+                  " -r MesosMasterLaunchConfig"
+              ]
+            ]
+          }
+        }
       }
     },
     
