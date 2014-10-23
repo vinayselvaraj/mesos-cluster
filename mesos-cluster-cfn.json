@@ -335,7 +335,9 @@
                   
                   "/sbin/service docker start\n",
                   "start mesos-slave\n",
-                  "echo manual >> /etc/init/mesos-master.conf"
+                  "echo manual >> /etc/init/mesos-master.conf",
+                  
+                  "docker pull centos:latest"
 
                 ]]},
                 "mode" : "000755",
