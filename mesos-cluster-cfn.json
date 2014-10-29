@@ -1,7 +1,7 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
   
-  "Description" : "mesos-cluster CloudFormation template",
+  "Description" : "Mesos Cluster CloudFormation Template:  This template creates a single master Mesos cluster",
   
   "Parameters" : {
     "MasterInstanceType" : {
@@ -9,87 +9,394 @@
       "Type" : "String",
       "Default" : "t2.micro"
     },
+    "SlaveInstanceType" : {
+      "Description" : "Mesos Slave Instance Type",
+      "Type" : "String",
+      "Default" : "c3.large"
+    },
     "KeyName" : {
       "Description" : "The EC2 Key Pair to allow SSH access to the instances",
       "Type" : "String",
       "Default" : "default"
-    },
-    "VpcId" : {
-      "Description" : "VPC ID",
-      "Type" : "String"
     }
   },
   
   "Mappings" : {
-    "AWSInstanceType2Arch" : {
-      "t1.micro"    : { "Arch" : "64" },
-      "t2.micro"    : { "Arch" : "64" },
-      "m1.small"    : { "Arch" : "64" },
-      "m1.medium"   : { "Arch" : "64" },
-      "m1.large"    : { "Arch" : "64" },
-      "m1.xlarge"   : { "Arch" : "64" },
-      "m2.xlarge"   : { "Arch" : "64" },
-      "m2.2xlarge"  : { "Arch" : "64" },
-      "m2.4xlarge"  : { "Arch" : "64" },
-      "m3.xlarge"   : { "Arch" : "64" },
-      "m3.2xlarge"  : { "Arch" : "64" },
-      "c1.medium"   : { "Arch" : "64" },
-      "c1.xlarge"   : { "Arch" : "64" }
-    },
     
     "AWSRegionArch2AMI" : {
-      "us-east-1"      : { "64" : "ami-b66ed3de" },
-      "us-west-1"      : { "64" : "ami-4b6f650e" },
-      "us-west-2"      : { "64" : "ami-b5a7ea85" },
-      "eu-west-1"      : { "64" : "ami-6e7bd919" },
-      "sa-east-1"      : { "64" : "ami-8737829a" },
-      "ap-southeast-1" : { "64" : "ami-ac5c7afe" },
-      "ap-southeast-2" : { "64" : "ami-63f79559" },
-      "ap-northeast-1" : { "64" : "ami-4985b048" }
+      "us-east-1"      : { "AMI" : "ami-b66ed3de" },
+      "us-west-1"      : { "AMI" : "ami-4b6f650e" },
+      "us-west-2"      : { "AMI" : "ami-b5a7ea85" },
+      "eu-west-1"      : { "AMI" : "ami-6e7bd919" },
+      "sa-east-1"      : { "AMI" : "ami-8737829a" },
+      "ap-southeast-1" : { "AMI" : "ami-ac5c7afe" },
+      "ap-southeast-2" : { "AMI" : "ami-63f79559" },
+      "ap-northeast-1" : { "AMI" : "ami-4985b048" }
     }
   },
   
   "Resources" : {
-    "MesosMasterEipA" : {
+    
+    "MesosMasterEip" : {
       "Type" : "AWS::EC2::EIP",
       "Properties" : {
         "Domain" : "vpc"
       }
     },
-    "MesosMasterEipB" : {
-      "Type" : "AWS::EC2::EIP",
+    
+    "VPC" : {
+      "Type" : "AWS::EC2::VPC",
       "Properties" : {
-        "Domain" : "vpc"
+        "CidrBlock" : "10.0.0.0/16",
+        "EnableDnsHostnames" : "true"
       }
     },
-    "MesosMasterEipC" : {
-      "Type" : "AWS::EC2::EIP",
+    
+    "IGW" : {
+      "Type" : "AWS::EC2::InternetGateway"
+    },
+    
+    "VPCGatewayAttachment" : {
+      "Type" : "AWS::EC2::VPCGatewayAttachment",
       "Properties" : {
-        "Domain" : "vpc"
+        "InternetGatewayId" : { "Ref" : "IGW" },
+        "VpcId" : { "Ref" : "VPC" }
+      }
+    },
+    
+    "VPCPublicSubnetRouteTable" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" }
+      }
+    },
+    
+    "VPCPublicIGWRoute" : {
+      "Type" : "AWS::EC2::Route",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "VPCPublicSubnetRouteTable" },
+        "GatewayId" : { "Ref" : "IGW"},
+        "DestinationCidrBlock" : "0.0.0.0/0"
+      }
+    },
+    
+    "VPCPublicRouteTableAssocSubnetA" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "VPCPublicSubnetRouteTable" },
+        "SubnetId" : { "Ref" : "SubnetA" }
+      }
+    },
+    
+    "VPCPublicRouteTableAssocSubnetB" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "VPCPublicSubnetRouteTable" },
+        "SubnetId" : { "Ref" : "SubnetB" }
+      }
+    },
+    
+    "VPCPublicRouteTableAssocSubnetC" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "VPCPublicSubnetRouteTable" },
+        "SubnetId" : { "Ref" : "SubnetC" }
+      }
+    },
+    
+    "SubnetA" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.1.0/24",
+        "AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : "" } ]}
+      }
+    },
+    
+    "SubnetB" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.2.0/24",
+        "AvailabilityZone" : { "Fn::Select" : [ "1", { "Fn::GetAZs" : "" } ]}
+      }
+    },
+    
+    "SubnetC" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.3.0/24",
+        "AvailabilityZone" : { "Fn::Select" : [ "2", { "Fn::GetAZs" : "" } ]}
       }
     },
     
     "MesosMasterSG" : {
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
-        "GroupDescription" : "MesosMaster SecurityGroup",
-        "VpcId" : { "Ref" : "VpcId" }
+        "GroupDescription" : "Mesos Master Security Group",
+        "VpcId" : { "Ref" : "VPC" }
+      }
+    },
+    
+    "MesosSlaveSG" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "Mesos Slave Security Group",
+        "VpcId" : { "Ref" : "VPC" }
+      }
+    },
+    
+    "MesosMasterIAMRole" : {
+      "Type": "AWS::IAM::Role",
+      "Properties" : {
+        "AssumeRolePolicyDocument" : {
+          "Version" : "2012-10-17",
+          "Statement" : [ {
+            "Effect" : "Allow",
+            "Principal" : {
+              "Service" : [ "ec2.amazonaws.com" ]
+            },
+            "Action" : [ "sts:AssumeRole" ]
+          }]
+        },
+        
+        "Path" : "/",
+        
+        "Policies" : [ {
+          "PolicyName" : "ControllerPolicy",
+          "PolicyDocument" : {
+            "Version" : "2012-10-17",
+            "Statement" : [
+              {
+                "Effect":"Allow",
+                "Action":"*",
+                "Resource":"*"
+              },
+              {
+                "Effect":"Deny",
+                "Action":"iam:*",
+                "Resource":"*"
+              }
+            ]
+          }
+        }]
+      }
+    },
+    
+    "MesosMasterInstProfile" : {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties" : {
+        "Path" : "/",
+        "Roles" : [ { "Ref" : "MesosMasterIAMRole" } ]
       }
     },
     
     "MesosMasterLaunchConfig" : {
       "Type" : "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata" : {
+        "AWS::CloudFormation::Init" : {
+          "config" : {
+            "packages" : {
+              "yum" : {
+                "ganglia" : [],
+                "ganglia-gmetad" : [],
+                "ganglia-gmond" : [],
+                "ganglia-web" : []
+              }
+            },
+            "files" : {
+              "/tmp/associate_eip.sh" : {
+                "content" : { "Fn::Join" : ["", [
+                  "#!/bin/bash\n",
+                  "INSTANCE_ID=`curl -s  http://169.254.169.254/latest/meta-data/instance-id`\n",
+                  "ALLOCATION_ID=", { "Fn::GetAtt" : [ "MesosMasterEip", "AllocationId" ]}, "\n",
+                  "EC2_REGION=", { "Ref": "AWS::Region"}, "\n",
+                  "aws ec2 --region $EC2_REGION associate-address --allocation-id $ALLOCATION_ID --instance-id $INSTANCE_ID --allow-reassociation\n"
+                ]]},
+                "mode" : "000755",
+                "owner" : "root",
+                "group" : "root"
+              },
+              "/tmp/setup.sh" : {
+                "content" : { "Fn::Join" : ["", [
+                  "#!/bin/bash\n",
+                  "until /tmp/associate_eip.sh\n",
+                  "do\n",
+                  "  sleep 15\n",
+                  "done\n",
+                  
+                  "yum -y update\n",
+                  "rpm -Uvh http://repos.mesosphere.io/el/6/noarch/RPMS/mesosphere-el-repo-6-2.noarch.rpm\n",
+                  "yum -y install mesos marathon\n",
+                  
+                  "rpm -Uvh http://archive.cloudera.com/cdh4/one-click-install/redhat/6/x86_64/cloudera-cdh-4-0.x86_64.rpm\n",
+                  "yum -y install zookeeper zookeeper-server\n",
+                  "zookeeper-server-initialize --myid=1\n",
+                  "echo \"server.1=`host -s ", {"Ref" : "MesosMasterEip"}," |awk {'print $NF'} |sed 's/\\.$//g'`:2888:3888\" >> /etc/zookeeper/conf/zoo.cfg\n",
+                  "chown -R zookeeper:zookeeper /var/lib/zookeeper\n",
+                  "/sbin/chkconfig zookeeper-server on\n",
+                  "/sbin/service zookeeper-server start\n",
+                  
+                  "# Skip: /etc/mesos/zk\n",
+                  "# Skip: /etc/mesos-master/quorum\n",
+                  
+                  "start mesos-master\n",
+                  "start marathon\n",
+                  
+                  "echo manual >> /etc/init/mesos-slave.conf"
+
+                ]]},
+                "mode" : "000755",
+                "owner" : "root",
+                "group" : "root"
+              }
+            },
+            "commands" : {
+              "runSetup" : {
+                "command" : "/tmp/setup.sh"
+              }
+            }
+          }
+        }
+      },
       "Properties" : {
         "KeyName" : { "Ref" : "KeyName" },
+        "AssociatePublicIpAddress" : "true",
+        "IamInstanceProfile" : { "Ref" : "MesosMasterInstProfile" },
         "ImageId" : {
           "Fn::FindInMap" : [
             "AWSRegionArch2AMI",
             { "Ref" : "AWS::Region" },
-            { "Fn::FindInMap" : ["AWSInstanceType2Arch", { "Ref" : "MasterInstanceType" }, "Arch"] }
+            "AMI"
           ]
         },
         "InstanceType" : { "Ref" : "MasterInstanceType" },
-        "SecurityGroups" : [ { "Ref" : "MesosMasterSG" } ]
+        "SecurityGroups" : [ { "Ref" : "MesosMasterSG" } ],
+        "UserData"        : {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "/opt/aws/bin/cfn-init --region ", 
+                  { "Ref": "AWS::Region"}, 
+                  " -s ", { "Ref" : "AWS::StackName" }, 
+                  " -r MesosMasterLaunchConfig"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    
+    "MesosMasterAutoScalingGroup" : {
+      "Type" : "AWS::AutoScaling::AutoScalingGroup",
+      "Properties" : {
+        "AvailabilityZones" : { "Fn::GetAZs" : "" },
+        "LaunchConfigurationName" : { "Ref" : "MesosMasterLaunchConfig" },
+        "VPCZoneIdentifier" : [ 
+          { "Ref" : "SubnetA" },
+          { "Ref" : "SubnetB" },
+          { "Ref" : "SubnetC" }
+        ],
+        "MinSize" : "1",
+        "MaxSize" : "1",
+        "Tags" : [
+          { "Key" : "Name", "Value" : "mesos-master", "PropagateAtLaunch" : "true" }
+        ]
+      }
+    },
+    
+    "MesosSlaveLaunchConfig" : {
+      "Type" : "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata" : {
+        "AWS::CloudFormation::Init" : {
+          "config" : {
+            "packages" : {
+              "yum" : {
+                "docker" : []
+              }
+            },
+            "files" : {
+              "/tmp/setup.sh" : {
+                "content" : { "Fn::Join" : ["", [
+                  "#!/bin/bash\n",
+
+                  
+                  "yum -y update\n",
+                  "rpm -Uvh http://repos.mesosphere.io/el/6/noarch/RPMS/mesosphere-el-repo-6-2.noarch.rpm\n",
+                  "yum -y install mesos\n",
+                  
+                  
+                  "echo \"zk://`host -s ", {"Ref" : "MesosMasterEip"}," |awk {'print $NF'} |sed 's/\\.$//g'`:2181/mesos\" > /etc/mesos/zk\n",
+                  "echo '5mins' > /etc/mesos-slave/executor_registration_timeout\n",
+                  "echo 'docker,mesos' > /etc/mesos-slave/containerizers\n",
+                  
+                  "/sbin/service docker start\n",
+                  "start mesos-slave\n",
+                  "echo manual >> /etc/init/mesos-master.conf",
+                  
+                  "docker pull centos:latest"
+
+                ]]},
+                "mode" : "000755",
+                "owner" : "root",
+                "group" : "root"
+              }
+            },
+            "commands" : {
+              "runSetup" : {
+                "command" : "/tmp/setup.sh"
+              }
+            }
+          }
+        }
+      },
+      "Properties" : {
+        "KeyName" : { "Ref" : "KeyName" },
+        "AssociatePublicIpAddress" : "true",
+        "ImageId" : {
+          "Fn::FindInMap" : [
+            "AWSRegionArch2AMI",
+            { "Ref" : "AWS::Region" },
+            "AMI"
+          ]
+        },
+        "InstanceType" : { "Ref" : "SlaveInstanceType" },
+        "SecurityGroups" : [ { "Ref" : "MesosSlaveSG" } ],
+        "UserData"        : {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "/opt/aws/bin/cfn-init --region ", 
+                  { "Ref": "AWS::Region"}, 
+                  " -s ", { "Ref" : "AWS::StackName" }, 
+                  " -r MesosSlaveLaunchConfig"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    
+    "MesosSlaveAutoScalingGroup" : {
+      "Type" : "AWS::AutoScaling::AutoScalingGroup",
+      "Properties" : {
+        "AvailabilityZones" : { "Fn::GetAZs" : "" },
+        "LaunchConfigurationName" : { "Ref" : "MesosSlaveLaunchConfig" },
+        "VPCZoneIdentifier" : [ 
+          { "Ref" : "SubnetA" },
+          { "Ref" : "SubnetB" },
+          { "Ref" : "SubnetC" }
+        ],
+        "MinSize" : "1",
+        "MaxSize" : "1",
+        "Tags" : [
+          { "Key" : "Name", "Value" : "mesos-slave", "PropagateAtLaunch" : "true" }
+        ]
       }
     }
     
