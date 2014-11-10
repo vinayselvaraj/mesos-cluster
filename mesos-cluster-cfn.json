@@ -315,7 +315,8 @@
           "config" : {
             "packages" : {
               "yum" : {
-                "docker" : []
+                "docker" : [],
+                "haproxy" : []
               }
             },
             "files" : {
