@@ -130,6 +130,15 @@
         "AvailabilityZone" : { "Fn::Select" : [ "2", { "Fn::GetAZs" : "" } ]}
       }
     },
+
+    "SubnetD" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.4.0/24",
+        "AvailabilityZone" : { "Fn::Select" : [ "3", { "Fn::GetAZs" : "" } ]}
+      }
+    },
     
     "MesosMasterSG" : {
       "Type" : "AWS::EC2::SecurityGroup",
@@ -298,7 +307,8 @@
         "VPCZoneIdentifier" : [ 
           { "Ref" : "SubnetA" },
           { "Ref" : "SubnetB" },
-          { "Ref" : "SubnetC" }
+          { "Ref" : "SubnetC" },
+          { "Ref" : "SubnetD" }
         ],
         "MinSize" : "1",
         "MaxSize" : "1",
@@ -391,7 +401,8 @@
         "VPCZoneIdentifier" : [ 
           { "Ref" : "SubnetA" },
           { "Ref" : "SubnetB" },
-          { "Ref" : "SubnetC" }
+          { "Ref" : "SubnetC" },
+          { "Ref" : "SubnetD" }
         ],
         "MinSize" : "1",
         "MaxSize" : "1",
