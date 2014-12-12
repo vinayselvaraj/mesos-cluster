@@ -156,6 +156,17 @@
       }
     },
     
+    "MesosSGSelfIngress" : {
+      "Type" : "AWS::EC2::SecurityGroupIngress",
+      "Properties" : {
+        "GroupId" : { "Ref" : "MesosSG" },
+        "IpProtocol" : "-1",
+        "ToPort" : "65535",
+        "FromPort" : "0",
+        "SourceSecurityGroupId" : { "Ref" : "MesosSG" }
+      }
+    },
+    
     "MesosMasterIAMRole" : {
       "Type": "AWS::IAM::Role",
       "Properties" : {
@@ -253,7 +264,7 @@
                   "start mesos-master\n",
                   "start marathon\n",
                   
-                  "echo manual >> /etc/init/mesos-slave.conf"
+                  "echo manual |tee /etc/init/mesos-slave.override"
 
                 ]]},
                 "mode" : "000755",
@@ -341,12 +352,12 @@
                   
                   
                   "echo \"zk://`host -s ", {"Ref" : "MesosMasterEip"}," |awk {'print $NF'} |sed 's/\\.$//g'`:2181/mesos\" > /etc/mesos/zk\n",
-                  "echo '5mins' > /etc/mesos-slave/executor_registration_timeout\n",
+                  "echo '10mins' > /etc/mesos-slave/executor_registration_timeout\n",
                   "echo 'docker,mesos' > /etc/mesos-slave/containerizers\n",
                   
                   "/sbin/service docker start\n",
                   "start mesos-slave\n",
-                  "echo manual >> /etc/init/mesos-master.conf",
+                  "echo manual >>  /etc/init/mesos-master.conf\n",
                   
                   "docker pull centos:latest"
 
@@ -359,6 +370,15 @@
             "commands" : {
               "runSetup" : {
                 "command" : "/tmp/setup.sh"
+              }
+            },
+            "services" : {
+              "sysvinit" : {
+                "haproxy" : {
+                  "enabled" : "true",
+                  "ensureRunning" : "true",
+                  "packages" : { "yum" : ["haproxy"] }
+                }
               }
             }
           }
@@ -404,8 +424,8 @@
           { "Ref" : "SubnetC" },
           { "Ref" : "SubnetD" }
         ],
-        "MinSize" : "4",
-        "MaxSize" : "4",
+        "MinSize" : "1",
+        "MaxSize" : "1",
         "Tags" : [
           { "Key" : "Name", "Value" : "mesos-slave", "PropagateAtLaunch" : "true" }
         ]
