@@ -12,7 +12,7 @@
     "SlaveInstanceType" : {
       "Description" : "Mesos Slave Instance Type",
       "Type" : "String",
-      "Default" : "c3.large"
+      "Default" : "t2.medium"
     },
     "KeyName" : {
       "Description" : "The EC2 Key Pair to allow SSH access to the instances",
@@ -103,6 +103,14 @@
         "SubnetId" : { "Ref" : "SubnetC" }
       }
     },
+
+    "VPCPublicRouteTableAssocSubnetD" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "VPCPublicSubnetRouteTable" },
+        "SubnetId" : { "Ref" : "SubnetD" }
+      }
+    },
     
     "SubnetA" : {
       "Type" : "AWS::EC2::Subnet",
@@ -140,18 +148,10 @@
       }
     },
     
-    "MesosMasterSG" : {
+    "MesosSG" : {
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
-        "GroupDescription" : "Mesos Master Security Group",
-        "VpcId" : { "Ref" : "VPC" }
-      }
-    },
-    
-    "MesosSlaveSG" : {
-      "Type" : "AWS::EC2::SecurityGroup",
-      "Properties" : {
-        "GroupDescription" : "Mesos Slave Security Group",
+        "GroupDescription" : "Mesos Security Group",
         "VpcId" : { "Ref" : "VPC" }
       }
     },
@@ -281,7 +281,7 @@
           ]
         },
         "InstanceType" : { "Ref" : "MasterInstanceType" },
-        "SecurityGroups" : [ { "Ref" : "MesosMasterSG" } ],
+        "SecurityGroups" : [ { "Ref" : "MesosSG" } ],
         "UserData"        : {
           "Fn::Base64": {
             "Fn::Join": [
@@ -375,7 +375,7 @@
           ]
         },
         "InstanceType" : { "Ref" : "SlaveInstanceType" },
-        "SecurityGroups" : [ { "Ref" : "MesosSlaveSG" } ],
+        "SecurityGroups" : [ { "Ref" : "MesosSG" } ],
         "UserData"        : {
           "Fn::Base64": {
             "Fn::Join": [
@@ -404,8 +404,8 @@
           { "Ref" : "SubnetC" },
           { "Ref" : "SubnetD" }
         ],
-        "MinSize" : "1",
-        "MaxSize" : "1",
+        "MinSize" : "4",
+        "MaxSize" : "4",
         "Tags" : [
           { "Key" : "Name", "Value" : "mesos-slave", "PropagateAtLaunch" : "true" }
         ]
