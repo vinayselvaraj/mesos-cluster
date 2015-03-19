@@ -1,0 +1,14 @@
+{
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "centos:centos7"
+    }
+  },
+  "id": "sleeper",
+  "instances": 1,
+  "cpus": 0.1,
+  "mem": 16,
+  "uris": [],
+  "cmd": "sleep 300"
+}
