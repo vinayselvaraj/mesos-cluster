@@ -12,6 +12,7 @@ Vagrant.configure(2) do |config|
     master.vm.network "private_network", ip: "172.28.128.100"
     master.vm.synced_folder ".", "/vagrant", disabled: true
     master.vm.provision "shell", inline: <<-SHELL
+        sudo yum -y update
         sudo rpm -Uvh http://repos.mesosphere.io/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm        
         sudo yum -y install mesos marathon mesosphere-zookeeper
         
@@ -34,6 +35,7 @@ Vagrant.configure(2) do |config|
       node.vm.network "private_network", ip: private_ip
       node.vm.synced_folder ".", "/vagrant", disabled: true
       node.vm.provision "shell", inline: <<-SHELL
+        sudo yum -y update
         sudo rpm -Uvh http://repos.mesosphere.io/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm
         sudo yum -y install mesos docker
         
