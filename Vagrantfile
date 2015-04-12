@@ -14,13 +14,15 @@ Vagrant.configure(2) do |config|
     master.vm.provision "shell", inline: <<-SHELL
         sudo yum -y update
         sudo rpm -Uvh http://repos.mesosphere.io/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm        
-        sudo yum -y install mesos marathon mesosphere-zookeeper
+        sudo yum -y install mesos marathon mesosphere-zookeeper docker
         
         sudo systemctl stop mesos-slave.service
         sudo systemctl disable mesos-slave.service
         
         sudo echo "172.28.128.100" > /etc/mesos-master/hostname
         sudo echo "172.28.128.100" > /etc/mesos-master/ip
+        
+        sudo systemctl enable docker
         
         sudo systemctl start zookeeper
         sudo systemctl start mesos-master
@@ -46,6 +48,8 @@ Vagrant.configure(2) do |config|
         sudo echo #{private_ip} > /etc/mesos-slave/hostname
         sudo echo #{private_ip} > /etc/mesos-slave/ip
         sudo echo "docker,mesos" > /etc/mesos-slave/containerizers
+        
+        sudo systemctl enable docker
         
         sudo systemctl start docker
         sudo systemctl start mesos-slave
