@@ -23,6 +23,7 @@ Vagrant.configure(2) do |config|
         sudo echo "172.28.128.100" > /etc/mesos-master/ip
         
         sudo systemctl enable docker
+        sudo systemctl start docker
         
         sudo systemctl start zookeeper
         sudo systemctl start mesos-master
