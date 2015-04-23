@@ -249,7 +249,7 @@
                   
                   "yum -y update\n",
                   "rpm -Uvh http://repos.mesosphere.io/el/6/noarch/RPMS/mesosphere-el-repo-6-2.noarch.rpm\n",
-                  "yum -y install mesos marathon\n",
+                  "yum -y install mesos marathon chronos\n",
                   
                   "rpm -Uvh http://archive.cloudera.com/cdh4/one-click-install/redhat/6/x86_64/cloudera-cdh-4-0.x86_64.rpm\n",
                   "yum -y install zookeeper zookeeper-server\n",
@@ -264,6 +264,7 @@
                   
                   "start mesos-master\n",
                   "start marathon\n",
+				  "start chronos\n",
                   
                   "echo manual |tee /etc/init/mesos-slave.override"
 
