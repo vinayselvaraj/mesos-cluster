@@ -1,0 +1,36 @@
+{
+  "id": "/docker-registry",
+  "instances": 1,
+  "cpus": 0.1,
+  "mem": 256,
+  "uris": [],
+
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "registry",
+      "network": "BRIDGE",
+      "portMappings": [
+        {
+          "containerPort": 5000,
+          "hostPort": 0,
+          "servicePort": 5000,
+          "protocol": "tcp"
+        }
+      ]
+    }
+  },
+  
+  "healthChecks": [
+    {
+      "protocol": "HTTP",
+      "path": "/",
+      "portIndex": 0,
+      "gracePeriodSeconds": 5,
+      "intervalSeconds": 20,
+      "maxConsecutiveFailures": 3,
+      "timeoutSeconds": 20
+    }
+  ]
+  
+}

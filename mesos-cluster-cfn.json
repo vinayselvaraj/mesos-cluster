@@ -426,11 +426,52 @@
           { "Ref" : "SubnetC" },
           { "Ref" : "SubnetD" }
         ],
-        "MinSize" : "1",
-        "MaxSize" : "1",
+        "MinSize" : "3",
+        "MaxSize" : "3",
+        "LoadBalancerNames" : [ { "Ref" : "MesosSlaveELB" } ],
         "Tags" : [
           { "Key" : "Name", "Value" : "mesos-slave", "PropagateAtLaunch" : "true" }
         ]
+      }
+    },
+    
+    "MesosSlaveELB" : {
+      "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties" : {
+        "Listeners": [
+          {
+            "LoadBalancerPort" : "80",
+            "InstancePort": "80",
+            "Protocol": "TCP"
+          },
+          {
+            "LoadBalancerPort" : "443",
+            "InstancePort": "443",
+            "Protocol": "TCP"
+          }
+        ],
+        
+        "Subnets": [
+          { "Ref" : "SubnetA" },
+          { "Ref" : "SubnetB" },
+          { "Ref" : "SubnetC" },
+          { "Ref" : "SubnetD" }
+        ],
+        
+        "HealthCheck": {
+          "Target": "TCP:80",
+          "HealthyThreshold": "3",
+          "Interval": "5",
+          "Timeout": "3",
+          "UnhealthyThreshold": "2"
+        },
+        
+        "ConnectionDrainingPolicy": {
+          "Enabled" : "true",
+          "Timeout" : "60"
+        },
+        
+        "CrossZone": "true"
       }
     }
     
